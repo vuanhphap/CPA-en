@@ -51,11 +51,18 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main
           git checkout main
+          if [ -d .github ]; then
+            mv .github /tmp/main-github
+          fi
           find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           cp -a /tmp/cpa-v8/cpa-english-trainer/. .
+          rm -rf .github
+          if [ -d /tmp/main-github ]; then
+            mv /tmp/main-github .github
+          fi
           git add -A
           if git diff --cached --quiet; then
-            echo 'main already matches V8 runtime'
+            echo 'main already matches V8 runtime (workflow files preserved)'
           else
             git commit -m 'Deploy CPA English Trainer V8 production'
             git push origin main
