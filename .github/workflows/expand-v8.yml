@@ -28,11 +28,11 @@ jobs:
           set -euo pipefail
           rm -f /tmp/cpa-v8-runtime.b64
           for i in 000 001 002 003 004 005 006 007 008 009; do cat "deploy/v8runtime/part_${i}.b64" >> /tmp/cpa-v8-runtime.b64; done
-          head -c 18000 deploy/v8runtime/part_010.b64 >> /tmp/cpa-v8-runtime.b64
+          cat deploy/v8runtime_fix/part_010a.b64 deploy/v8runtime_fix/part_010b.b64 deploy/v8runtime_fix/part_010c.b64 >> /tmp/cpa-v8-runtime.b64
           cat deploy/v8runtime/part_011.b64 deploy/v8runtime/part_012.b64 >> /tmp/cpa-v8-runtime.b64
           cat deploy/v8runtime_fix/part_013a.b64 deploy/v8runtime_fix/part_013b.b64 deploy/v8runtime_fix/part_013c.b64 >> /tmp/cpa-v8-runtime.b64
           for i in 014 015 016 017 018; do cat "deploy/v8runtime/part_${i}.b64" >> /tmp/cpa-v8-runtime.b64; done
-          head -c 18000 deploy/v8runtime/part_019.b64 >> /tmp/cpa-v8-runtime.b64
+          cat deploy/v8runtime_fix/part_019a.b64 deploy/v8runtime_fix/part_019b.b64 deploy/v8runtime_fix/part_019c.b64 deploy/v8runtime_fix/part_019d.b64 >> /tmp/cpa-v8-runtime.b64
           cat deploy/v8runtime/part_020.b64 deploy/v8runtime/part_021.b64 >> /tmp/cpa-v8-runtime.b64
           test "$(wc -c < /tmp/cpa-v8-runtime.b64)" -eq 384328
           base64 -d /tmp/cpa-v8-runtime.b64 > /tmp/cpa-v8-runtime.tar.xz
