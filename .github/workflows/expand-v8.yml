@@ -5,6 +5,7 @@ on:
     branches: [bootstrap-v8]
     paths:
       - 'deploy/v8runtime/**'
+      - 'deploy/v8runtime_fix/**'
       - '.github/workflows/expand-v8.yml'
   workflow_dispatch:
 
@@ -25,7 +26,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat deploy/v8runtime/part_*.b64 > /tmp/cpa-v8-runtime.b64
+          rm -f /tmp/cpa-v8-runtime.b64
+          for i in $(seq -w 0 9); do cat "deploy/v8runtime/part_0${i}.b64" >> /tmp/cpa-v8-runtime.b64; done
+          head -c 18000 deploy/v8runtime/part_010.b64 >> /tmp/cpa-v8-runtime.b64
+          cat deploy/v8runtime/part_011.b64 deploy/v8runtime/part_012.b64 >> /tmp/cpa-v8-runtime.b64
+          cat deploy/v8runtime_fix/part_013a.b64 deploy/v8runtime_fix/part_013b.b64 deploy/v8runtime_fix/part_013c.b64 >> /tmp/cpa-v8-runtime.b64
+          for i in 014 015 016 017 018; do cat "deploy/v8runtime/part_${i}.b64" >> /tmp/cpa-v8-runtime.b64; done
+          head -c 18000 deploy/v8runtime/part_019.b64 >> /tmp/cpa-v8-runtime.b64
+          cat deploy/v8runtime/part_020.b64 deploy/v8runtime/part_021.b64 >> /tmp/cpa-v8-runtime.b64
+          test "$(wc -c < /tmp/cpa-v8-runtime.b64)" -eq 384328
           base64 -d /tmp/cpa-v8-runtime.b64 > /tmp/cpa-v8-runtime.tar.xz
           echo 'eb54d846737d35096c3aea901e12dac1837a2dd158caa6ce7bf6928a11962126  /tmp/cpa-v8-runtime.tar.xz' | sha256sum -c -
           mkdir -p /tmp/cpa-v8
