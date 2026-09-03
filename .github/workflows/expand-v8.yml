@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -f /tmp/cpa-v8-runtime.b64
-          for i in $(seq -w 0 9); do cat "deploy/v8runtime/part_0${i}.b64" >> /tmp/cpa-v8-runtime.b64; done
+          for i in 000 001 002 003 004 005 006 007 008 009; do cat "deploy/v8runtime/part_${i}.b64" >> /tmp/cpa-v8-runtime.b64; done
           head -c 18000 deploy/v8runtime/part_010.b64 >> /tmp/cpa-v8-runtime.b64
           cat deploy/v8runtime/part_011.b64 deploy/v8runtime/part_012.b64 >> /tmp/cpa-v8-runtime.b64
           cat deploy/v8runtime_fix/part_013a.b64 deploy/v8runtime_fix/part_013b.b64 deploy/v8runtime_fix/part_013c.b64 >> /tmp/cpa-v8-runtime.b64
