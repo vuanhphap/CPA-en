@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>CPA English Trainer — Luyện tiếng Anh thi CPA Việt Nam</title>
+  <meta name="description" content="Nền tảng ôn thi tiếng Anh CPA: SRS từ vựng, IPA, collocation, word family, luyện câu và đề gốc 2010–2024. Học miễn phí, đăng ký để đồng bộ đa thiết bị." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://cpa-english-trainer.vercel.app/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="CPA English Trainer" />
+  <meta property="og:description" content="Ôn thi tiếng Anh CPA bằng SRS trên corpus 14 đề thi thật (2010–2024)." />
+  <meta property="og:locale" content="vi_VN" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#content">Bỏ qua điều hướng</a>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Điều hướng chính">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">CPA</div>
+        <div><strong>English Trainer</strong><small>Exam corpus 2010–2024</small></div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <div class="nav-group">Theo dõi</div>
+        <button data-view="dashboard" class="active">📊 Tổng quan</button>
+        <button data-view="history">📈 Tiến trình học</button>
+        <button data-view="weak">⚠️ Câu/từ yếu</button>
+        <div class="nav-group">Học</div>
+        <button data-view="study">🧠 Học SRS</button>
+        <button data-view="families">🧬 Word Family</button>
+        <button data-view="collocations">🔗 Collocation</button>
+        <button data-view="chunks">🧩 Cụm &amp; câu</button>
+        <button data-view="dictionary">📚 Từ điển</button>
+        <div class="nav-group">Luyện thi</div>
+        <button data-view="quiz">🎯 Quiz tự chấm</button>
+        <button data-view="drills">✍️ Luyện câu đề thi</button>
+        <button data-view="exams">📝 Luyện đề gốc</button>
+        <div class="nav-group">Khác</div>
+        <button data-view="settings">⚙️ Dữ liệu &amp; cài đặt</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div id="syncBadge" class="sync-badge offline" role="status">● Đang học ngoại tuyến</div>
+        <button class="primary full" id="authButton">Đăng nhập / Đăng ký</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-only" id="menuButton" aria-label="Mở menu" aria-expanded="false">☰</button>
+        <div class="topbar-title">
+          <h1 id="viewTitle">Tổng quan</h1>
+          <p id="viewSubtitle">Học theo dữ liệu đề thi thực tế, ưu tiên CPA technical vocabulary.</p>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" id="quickSync" title="Đồng bộ ngay" aria-label="Đồng bộ ngay">↻</button>
+          <div class="user-menu">
+            <button class="avatar-btn" id="userMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Tài khoản">
+              <span id="avatarInitial">?</span>
+            </button>
+            <div class="user-dropdown hidden" id="userDropdown" role="menu">
+              <div class="user-card">
+                <div class="avatar-lg" id="avatarLarge">?</div>
+                <div class="user-meta">
+                  <strong id="menuName">Khách</strong>
+                  <span id="menuEmail">Chưa đăng nhập — dữ liệu chỉ lưu trên máy này</span>
+                </div>
+              </div>
+              <div class="user-stat-row" id="menuStats"></div>
+              <hr class="divider" />
+              <button role="menuitem" id="menuProfile">✏️ Hồ sơ &amp; mục tiêu</button>
+              <button role="menuitem" id="menuSync">↻ Đồng bộ ngay</button>
+              <button role="menuitem" id="menuSettings">⚙️ Dữ liệu &amp; cài đặt</button>
+              <hr class="divider" />
+              <button role="menuitem" id="menuAuth">🔑 Đăng nhập / Đăng ký</button>
+              <button role="menuitem" id="menuSignOut" class="danger-text hidden">🚪 Đăng xuất</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section id="content" class="content" tabindex="-1">
+        <div class="loading"><span class="spinner" aria-hidden="true"></span> Đang nạp dữ liệu học…</div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========== AUTH ========== -->
+  <dialog id="authDialog" class="modal" aria-labelledby="authTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="authTitle">Đăng nhập</h2>
+        <button class="icon-btn" id="authClose" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="segmented auth-tabs" id="authTabs" role="tablist">
+        <button role="tab" data-tab="signin" class="active">Đăng nhập</button>
+        <button role="tab" data-tab="signup">Tạo tài khoản</button>
+        <button role="tab" data-tab="reset">Quên mật khẩu</button>
+      </div>
+
+      <p class="muted small" id="authIntro">Không đăng nhập vẫn học được bình thường. Đăng nhập để đồng bộ tiến trình giữa điện thoại và máy tính.</p>
+
+      <div class="oauth-row" id="oauthRow">
+        <button class="secondary oauth" data-provider="google">
+          <span class="oauth-mark g">G</span> Tiếp tục với Google
+        </button>
+        <button class="secondary oauth" data-provider="github">
+          <span class="oauth-mark gh">⌥</span> Tiếp tục với GitHub
+        </button>
+      </div>
+      <div class="or-line" id="orLine"><span>hoặc dùng email</span></div>
+
+      <div class="field-stack">
+        <label class="field" id="fieldName">Tên hiển thị
+          <input id="authName" type="text" maxlength="60" autocomplete="nickname" placeholder="VD: Nguyễn Văn A" />
+        </label>
+        <label class="field">Email
+          <input id="authEmail" type="email" required autocomplete="email" placeholder="ban@example.com" />
+        </label>
+        <label class="field" id="fieldPassword">Mật khẩu
+          <span class="input-wrap">
+            <input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="Tối thiểu 8 ký tự" />
+            <button type="button" class="reveal" id="togglePassword" aria-label="Hiện mật khẩu">👁</button>
+          </span>
+          <span class="pw-meter" id="pwMeter"><i></i></span>
+          <span class="tiny muted" id="pwHint"></span>
+        </label>
+      </div>
+
+      <label class="checkbox tiny" id="fieldTerms">
+        <input type="checkbox" id="authAgree" />
+        <span>Tôi hiểu đây là công cụ ôn tập cá nhân; đáp án mẫu là tự soạn, không phải đáp án chính thức của hội đồng thi.</span>
+      </label>
+
+      <div class="button-row">
+        <button type="button" id="authSubmit" class="primary full">Đăng nhập</button>
+      </div>
+      <button type="button" id="resendConfirm" class="link-btn hidden">Gửi lại email xác nhận</button>
+      <button type="button" id="continueGuest" class="link-btn">Tiếp tục học không cần tài khoản →</button>
+
+      <div id="authMessage" class="form-message" role="alert"></div>
+    </div>
+  </dialog>
+
+  <!-- ========== PROFILE ========== -->
+  <dialog id="profileDialog" class="modal" aria-labelledby="profileTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="profileTitle">Hồ sơ &amp; mục tiêu</h2>
+        <button class="icon-btn" id="profileClose" aria-label="Đóng">✕</button>
+      </div>
+      <div class="profile-head">
+        <div class="avatar-lg" id="profileAvatar">?</div>
+        <label class="field full">Tên hiển thị
+          <input id="profileName" type="text" maxlength="60" placeholder="Tên của bạn" />
+        </label>
+      </div>
+      <label class="field">Màu đại diện
+        <input id="profileHue" type="range" min="0" max="360" step="1" />
+      </label>
+      <div class="grid two">
+        <label class="field">Phút học/ngày<input id="profileMinutes" type="number" min="5" max="240" /></label>
+        <label class="field">Lượt ôn/ngày<input id="profileReviews" type="number" min="5" max="300" /></label>
+        <label class="field">Từ mới/ngày<input id="profileNew" type="number" min="0" max="50" /></label>
+        <label class="field">Ngày thi mục tiêu<input id="profileExamDate" type="date" /></label>
+      </div>
+      <p class="tiny muted" id="profileScope"></p>
+      <div class="button-row">
+        <button class="primary full" id="profileSave">Lưu</button>
+      </div>
+      <div id="profileMessage" class="form-message" role="alert"></div>
+    </div>
+  </dialog>
+
+  <!-- ========== MERGE GUEST DATA ========== -->
+  <dialog id="mergeDialog" class="modal" aria-labelledby="mergeTitle">
+    <div class="modal-card">
+      <div class="modal-head"><h2 id="mergeTitle">Chuyển tiến trình khách vào tài khoản?</h2></div>
+      <p class="muted small" id="mergeSummary"></p>
+      <div class="notice">Chỉ làm khi máy này là của bạn. Sau khi chuyển, hồ sơ khách sẽ được dọn để tránh trộn dữ liệu của người khác.</div>
+      <div class="button-row">
+        <button class="primary" id="mergeYes">Chuyển vào tài khoản</button>
+        <button class="secondary" id="mergeNo">Giữ riêng, không chuyển</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+  <script src="config.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

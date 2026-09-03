@@ -1,0 +1,24 @@
+{
+  "name": "CPA English Trainer",
+  "short_name": "CPA English",
+  "id": "/cpa-english-trainer/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "lang": "vi",
+  "dir": "ltr",
+  "categories": ["education", "productivity"],
+  "description": "Ôn thi tiếng Anh CPA: SRS từ vựng, IPA, word family, collocation, luyện câu và đề gốc 2010–2024.",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Học SRS hôm nay", "short_name": "Học SRS", "url": "./#study" },
+    { "name": "Câu/từ yếu",      "short_name": "Từ yếu",  "url": "./#weak" },
+    { "name": "Luyện đề gốc",     "short_name": "Đề gốc",  "url": "./#exams" }
+  ]
+}
