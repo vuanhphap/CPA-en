@@ -1,0 +1,62 @@
+name: Expand CPA English Trainer V8
+
+on:
+  push:
+    branches: [bootstrap-v8]
+    paths:
+      - 'deploy/v8runtime/**'
+      - '.github/workflows/expand-v8.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  expand-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout bootstrap branch
+        uses: actions/checkout@v4
+        with:
+          ref: bootstrap-v8
+          fetch-depth: 0
+
+      - name: Rebuild and verify runtime archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat deploy/v8runtime/part_*.b64 > /tmp/cpa-v8-runtime.b64
+          base64 -d /tmp/cpa-v8-runtime.b64 > /tmp/cpa-v8-runtime.tar.xz
+          echo 'eb54d846737d35096c3aea901e12dac1837a2dd158caa6ce7bf6928a11962126  /tmp/cpa-v8-runtime.tar.xz' | sha256sum -c -
+          mkdir -p /tmp/cpa-v8
+          tar -xJf /tmp/cpa-v8-runtime.tar.xz -C /tmp/cpa-v8
+          test -f /tmp/cpa-v8/cpa-english-trainer/index.html
+          test -f /tmp/cpa-v8/cpa-english-trainer/config.js
+          test -f /tmp/cpa-v8/cpa-english-trainer/vercel.json
+
+      - name: Replace main with clean V8 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          git checkout main
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a /tmp/cpa-v8/cpa-english-trainer/. .
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'main already matches V8 runtime'
+          else
+            git commit -m 'Deploy CPA English Trainer V8 production'
+            git push origin main
+          fi
+
+      - name: Verify main content
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -f config.js
+          grep -q 'SUPABASE_URL' config.js
+          echo 'CPA English Trainer V8 published to main.'
