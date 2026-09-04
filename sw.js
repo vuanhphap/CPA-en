@@ -3,7 +3,7 @@
    network-first, nếu không thì người dùng deploy bản mới mà máy khách vẫn chạy
    bản cũ vĩnh viễn cho tới khi tự xoá cache — lỗi kinh điển của PWA tĩnh.
    Dữ liệu corpus (data/*.json) là bất biến theo phiên bản nên vẫn cache-first. */
-const VERSION='v10-20260904';
+const VERSION='v10-20260904-authfix1';
 const SHELL_CACHE=`cpa-shell-${VERSION}`;
 const DATA_CACHE=`cpa-data-${VERSION}`;
 
