@@ -181,5 +181,77 @@ function token(css, block, name) {
     ok('Không id nào bị thiết kế xoá mất', orphan.length === 0, orphan.join(', '));
   }
 
+  console.log('\n[8] Sẵn sàng cho Cloudflare Pages');
+  {
+    // Cloudflare Pages KHÔNG đọc vercel.json. Thiếu _headers thì bản deploy trên
+    // Cloudflare chạy hoàn toàn không CSP — mọi biện pháp bảo mật lặng lẽ biến mất.
+    ok('Có _headers cho Cloudflare Pages', fs.existsSync(path.join(ROOT, '_headers')));
+    ok('Có _redirects cho Cloudflare Pages', fs.existsSync(path.join(ROOT, '_redirects')));
+
+    const headers = read('_headers');
+    const vercelCsp = (read('vercel.json').match(/"(default-src[^"]*)"/) || [])[1];
+    const cfCsp = (headers.match(/Content-Security-Policy: (.+)/) || [])[1];
+    ok('CSP của Cloudflare khớp CSP của Vercel',
+      vercelCsp && cfCsp && vercelCsp.trim() === cfCsp.trim(),
+      'hai nền tảng đang khác nhau');
+
+    for (const h of ['X-Content-Type-Options', 'X-Frame-Options', 'Referrer-Policy',
+                     'Strict-Transport-Security', 'Permissions-Policy']) {
+      ok(`_headers có ${h}`, headers.includes(h));
+    }
+    ok('Corpus được cache vĩnh viễn', /\/data\/\*[\s\S]{0,120}immutable/.test(headers));
+    ok('Font được cache vĩnh viễn', /\/fonts\/\*[\s\S]{0,120}immutable/.test(headers));
+    ok('Mã ứng dụng luôn kiểm tra lại', /\/js\/\*[\s\S]{0,120}must-revalidate/.test(headers));
+    ok('sw.js không bị cache', /\/sw\.js[\s\S]{0,160}must-revalidate/.test(headers));
+  }
+
+  console.log('\n[9] Không còn phụ thuộc script bên ngoài');
+  {
+    const csp = (read('vercel.json').match(/"(default-src[^"]*)"/) || [])[1];
+    ok('CSP script-src chỉ còn self', /script-src 'self'(;|$)/.test(csp), csp);
+    ok('index.html không nạp script từ CDN ngoài',
+      !/<script[^>]+src="https?:\/\//.test(stripHtmlComments(html)));
+    const vendored = fs.existsSync(path.join(ROOT, 'vendor'))
+      && fs.readdirSync(path.join(ROOT, 'vendor')).filter(f => f.endsWith('.js'));
+    ok('SDK Supabase được tự host', vendored && vendored.length === 1, JSON.stringify(vendored));
+    ok('Tên tệp SDK có gắn số phiên bản', vendored && /\d+\.\d+\.\d+\.js$/.test(vendored[0]),
+      vendored && vendored[0]);
+    ok('index.html trỏ đúng tệp SDK đã tự host',
+      vendored && html.includes(`vendor/${vendored[0]}`));
+    ok('Service worker precache SDK', /vendor\//.test(read('sw.js')));
+  }
+
+  console.log('\n[10] Chống lạm dụng phía máy chủ');
+  {
+    const sql = read('supabase/schema.sql');
+    ok('Có hạn mức cho RPC nặng', /consume_heavy_rpc/.test(sql));
+    ok('rebuild_daily_stats gọi qua hạn mức',
+      /rebuild_daily_stats[\s\S]{0,900}consume_heavy_rpc/.test(sql));
+    ok('days_back bị kẹp, client không tự ý quét 10 năm',
+      /days_back := least\(greatest/.test(sql));
+    ok('Ghi event vẫn qua RPC có hạn mức', /log_learning_events/.test(sql));
+
+    // Khoá anon nằm công khai trong mã nguồn; mở corpus cho anon là bộ khuếch đại
+    // băng thông tính tiền trên hoá đơn Supabase.
+    // schema.sql là migration nối tiếp: khối V8 cũ vẫn nằm trong tệp dù V10 đã drop
+    // và tạo lại chính sách đó. Quét cả tệp sẽ khớp câu lệnh ĐÃ BỊ THAY THẾ và báo
+    // sai. Chỉ xét định nghĩa CUỐI CÙNG — đó mới là cái có hiệu lực sau khi chạy.
+    const lastPolicy = (body) => {
+      const all = [...sql.matchAll(new RegExp('create policy ' + body + '[\\\\s\\\\S]*?;', 'g'))];
+      return all.length ? all[all.length - 1][0] : '';
+    };
+    ok('content_items KHÔNG cho khách vô danh đọc',
+      !/to anon/.test(lastPolicy('content_items_read')),
+      lastPolicy('content_items_read').slice(0, 120));
+    ok('content_packs KHÔNG cho khách vô danh đọc',
+      !/to anon/.test(lastPolicy('content_packs_read')));
+    ok('content_manifest đã thu hồi quyền của anon',
+      /revoke execute on function public\.content_manifest\(\) from anon/.test(sql));
+    ok('Có view chỉ số hạn mức cho admin', /v_quota_usage/.test(sql));
+
+    ok('Client hiểu mã -1 là bị hạn mức, không phải lỗi',
+      /Number\(pulled\)>=0/.test(read('js/sync.js')));
+  }
+
   R.done();
 })().catch(e => { console.error('LỖI HARNESS:', e); process.exit(1); });

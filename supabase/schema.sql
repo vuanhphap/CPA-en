@@ -634,3 +634,160 @@ grant execute on function public.content_manifest() to anon, authenticated;
 --   select * from public.log_learning_events('[]'::jsonb);
 -- Realtime đã bật:
 --   select tablename from pg_publication_tables where pubname='supabase_realtime';
+
+-- =====================================================================
+-- V10 — CHỊU TẢI VÀ CHỐNG LẠM DỤNG PHÍA MÁY CHỦ
+--
+-- Điểm cần hiểu trước khi đọc phần này: đặt web tĩnh sau Cloudflare KHÔNG bảo vệ
+-- Supabase. Trình duyệt gọi thẳng https://<ref>.supabase.co, traffic đó không đi
+-- qua Cloudflare. Muốn có WAF/rate-limit ở tầng mạng cho API thì phải gắn custom
+-- domain của Supabase vào Cloudflare (xem DEPLOYMENT.md). Khối SQL dưới đây là lớp
+-- phòng thủ nằm trong chính database, luôn có hiệu lực bất kể đặt sau CDN nào.
+-- =====================================================================
+
+-- ---------- 10.1 Hạn mức cho các RPC tốn tài nguyên ----------
+-- rebuild_daily_stats() quét toàn bộ learning_events của người dùng trong 120 ngày
+-- rồi gộp nhóm. Client gọi nó ở mỗi lần đồng bộ. Trước V10 nó không có giới hạn nào:
+-- một tài khoản hợp lệ gọi lặp trong vòng lặp là đủ làm nghẽn CPU của database.
+alter table public.usage_quota add column if not exists heavy_rpc_calls integer not null default 0;
+alter table public.usage_quota add column if not exists last_heavy_rpc timestamptz;
+
+create or replace function public.quota_limit_heavy_rpc()
+returns integer language sql immutable as $$ select 120 $$;   -- ~1 lần / 12 phút / ngày
+
+-- Đếm và chặn. Trả về true nếu được phép chạy tiếp.
+create or replace function public.consume_heavy_rpc(min_gap_seconds integer default 20)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid  uuid := auth.uid();
+  used integer;
+  last timestamptz;
+begin
+  if uid is null then
+    raise exception 'Chua dang nhap' using errcode = '28000';
+  end if;
+
+  insert into public.usage_quota (user_id, quota_date, heavy_rpc_calls, last_heavy_rpc)
+  values (uid, current_date, 0, null)
+  on conflict (user_id, quota_date) do nothing;
+
+  select heavy_rpc_calls, last_heavy_rpc into used, last
+  from public.usage_quota where user_id = uid and quota_date = current_date
+  for update;
+
+  -- Chặn gọi dồn dập: hai lần liên tiếp phải cách nhau tối thiểu min_gap_seconds.
+  if last is not null and last > now() - make_interval(secs => min_gap_seconds) then
+    return false;
+  end if;
+  if used >= public.quota_limit_heavy_rpc() then
+    return false;
+  end if;
+
+  update public.usage_quota
+     set heavy_rpc_calls = heavy_rpc_calls + 1, last_heavy_rpc = now(), updated_at = now()
+   where user_id = uid and quota_date = current_date;
+  return true;
+end;
+$$;
+
+revoke all on function public.consume_heavy_rpc(integer) from public, anon;
+grant execute on function public.consume_heavy_rpc(integer) to authenticated;
+
+-- Bọc hạn mức vào rebuild_daily_stats. Trả -1 nghĩa là bị từ chối vì hạn mức, KHÔNG
+-- phải lỗi — client hiểu là "bỏ qua lần này", tiến trình vẫn nằm an toàn trên máy.
+create or replace function public.rebuild_daily_stats(days_back integer default 120)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+  touched integer;
+begin
+  if uid is null then
+    raise exception 'Chua dang nhap' using errcode = '28000';
+  end if;
+  if not public.consume_heavy_rpc(20) then
+    return -1;
+  end if;
+  -- Kẹp tham số: client không được tự ý yêu cầu quét 10 năm dữ liệu.
+  days_back := least(greatest(coalesce(days_back, 120), 1), 400);
+
+  insert into public.daily_stats as d
+    (user_id, study_date, reviews, new_items, correct_count, wrong_count, study_seconds, exam_attempts, updated_at)
+  select v.user_id, v.study_date, v.reviews, v.new_items, v.correct_count, v.wrong_count, v.study_seconds, v.exam_attempts, now()
+  from public.v_user_daily v
+  where v.user_id = uid and v.study_date >= current_date - days_back
+  on conflict (user_id, study_date) do update set
+    reviews       = greatest(d.reviews,       excluded.reviews),
+    new_items     = greatest(d.new_items,     excluded.new_items),
+    correct_count = greatest(d.correct_count, excluded.correct_count),
+    wrong_count   = greatest(d.wrong_count,   excluded.wrong_count),
+    study_seconds = greatest(d.study_seconds, excluded.study_seconds),
+    exam_attempts = greatest(d.exam_attempts, excluded.exam_attempts),
+    updated_at    = now();
+
+  get diagnostics touched = row_count;
+  return touched;
+end;
+$$;
+
+revoke all on function public.rebuild_daily_stats(integer) from public, anon;
+grant execute on function public.rebuild_daily_stats(integer) to authenticated;
+
+-- ---------- 10.2 Đóng đường đọc corpus cho khách vô danh ----------
+-- V8 mở content_items cho `anon` đọc với lý do "nội dung ôn thi là công khai". Điều
+-- đó đúng về mặt nội dung nhưng sai về mặt chịu tải: khoá anon nằm công khai trong
+-- mã nguồn, nên bất kỳ ai cũng kéo được toàn bộ corpus lặp vô hạn. Gói từ vựng nặng
+-- ~1,7 MB — đây là bộ khuếch đại băng thông tính tiền trên hoá đơn Supabase.
+--
+-- Người học chưa đăng nhập vẫn dùng app bình thường: họ đọc JSON tĩnh đóng gói sẵn,
+-- do CDN phục vụ (Cloudflare/Vercel hấp thụ được, và miễn phí). Chỉ phần NÂNG CẤP
+-- nội dung từ database mới cần tài khoản.
+drop policy if exists content_packs_read on public.content_packs;
+create policy content_packs_read on public.content_packs for select
+  to authenticated using (is_active);
+
+drop policy if exists content_items_read on public.content_items;
+create policy content_items_read on public.content_items for select
+  to authenticated
+  using (exists (select 1 from public.content_packs p
+                 where p.pack_id = content_items.pack_id and p.is_active));
+
+revoke execute on function public.content_manifest() from anon;
+grant execute on function public.content_manifest() to authenticated;
+
+-- ---------- 10.3 Chỉ số vận hành cho admin ----------
+-- Không có bảng này thì không biết ai đang chạm trần, và một đợt lạm dụng chỉ lộ ra
+-- khi hoá đơn về.
+drop view if exists public.v_quota_usage;
+create view public.v_quota_usage
+with (security_invoker = true) as
+select quota_date,
+       count(*)                                             as active_users,
+       sum(events_written)                                  as events_total,
+       max(events_written)                                  as events_max_single_user,
+       count(*) filter (where events_written >= public.quota_limit_events())      as users_at_event_cap,
+       count(*) filter (where heavy_rpc_calls >= public.quota_limit_heavy_rpc())  as users_at_rpc_cap
+from public.usage_quota
+group by quota_date
+order by quota_date desc;
+
+-- Admin xem được toàn bộ hạn mức; người dùng thường vẫn chỉ thấy hàng của mình.
+drop policy if exists usage_quota_admin_read on public.usage_quota;
+create policy usage_quota_admin_read on public.usage_quota for select
+  to authenticated using (public.has_role('admin'));
+
+-- ---------- 10.4 KIỂM TRA ----------
+-- Hạn mức RPC nặng có chặn gọi dồn:
+--   select public.consume_heavy_rpc(20);  -- true
+--   select public.consume_heavy_rpc(20);  -- false (chưa đủ 20 giây)
+-- Khách vô danh không đọc được corpus:
+--   đăng xuất rồi gọi content_manifest() → phải bị từ chối
+-- Xem tình hình hạn mức:
+--   select * from public.v_quota_usage limit 14;

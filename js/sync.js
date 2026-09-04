@@ -259,7 +259,9 @@ export async function syncAll(){
     // idempotent, không còn phụ thuộc thứ tự sync của từng thiết bị.
     try{
       const {data:pulled}=await db.rpc('rebuild_daily_stats',{days_back:120});
-      if(pulled!=null){
+      // -1 nghĩa là máy chủ từ chối vì hạn mức chống lạm dụng, KHÔNG phải lỗi. Bỏ qua
+      // lần dồn này; tiến trình vẫn nằm an toàn trên máy và lần sync sau sẽ dồn lại.
+      if(pulled!=null && Number(pulled)>=0){
         const {data:fresh}=await db.from('daily_stats').select('*').eq('user_id',currentUser.id).order('study_date',{ascending:false}).limit(180);
         for(const d of fresh||[]){
           const cur=state.daily[d.study_date]||{};

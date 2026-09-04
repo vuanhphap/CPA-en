@@ -110,3 +110,53 @@ Những việc này môi trường ở đây không làm được, và chúng l�
 3. **Đăng ký hai tài khoản khác nhau** và xác nhận không bên nào thấy dữ liệu bên kia —
    phép thử duy nhất chứng minh RLS chạy đúng.
 4. **Gắn SMTP riêng.** SMTP mặc định của Supabase chỉ ~3–4 email/giờ.
+
+---
+
+# Đợt 2 — chuẩn bị cho Cloudflare và chống lạm dụng
+
+Câu hỏi "có triển khai trên Cloudflare được không, tao lo bị DDoS" làm lộ thêm 4 vấn đề.
+
+**12. Cloudflare Pages không đọc `vercel.json`.** Deploy lên Cloudflare hôm nay là chạy
+hoàn toàn **không có CSP, không có HSTS, không có chính sách cache** — và không có cảnh
+báo nào. Toàn bộ phần bảo mật vừa sửa ở đợt 1 lặng lẽ biến mất.
+*Sửa:* thêm `_headers` và `_redirects`. `qa/test_design.js` đối chiếu CSP giữa hai tệp,
+sửa một bên mà quên bên kia thì test đỏ.
+
+**13. SDK Supabase nạp từ jsdelivr, không có `integrity`.** CSP cho phép
+`script-src https://cdn.jsdelivr.net`. CDN bị chiếm hoặc gói bị đầu độc thì mã lạ chạy
+với toàn quyền trên phiên đăng nhập của mọi người dùng. Thêm nữa, nhiều mạng doanh
+nghiệp chặn CDN công cộng — người dùng ở đó mở app thấy trang trắng.
+*Sửa:* tự host `vendor/supabase-js-2.112.4.js` (208 KB, 54 KB sau gzip), tên tệp gắn số
+phiên bản. CSP siết còn `script-src 'self'` — không còn nguồn script bên ngoài nào.
+
+**14. `rebuild_daily_stats()` không có giới hạn.** Nó quét toàn bộ `learning_events`
+của người dùng trong 120 ngày rồi gộp nhóm, và client gọi nó ở mỗi lần đồng bộ. Một tài
+khoản hợp lệ gọi lặp trong vòng lặp là đủ làm nghẽn CPU của database. RLS không giúp gì
+ở đây — kẻ tấn công đang truy cập đúng dữ liệu của chính họ.
+*Sửa:* `consume_heavy_rpc()` — hai lần gọi phải cách nhau ≥20 giây, tối đa 120 lần/ngày.
+`days_back` bị kẹp trong 1–400. Trả về `-1` khi bị từ chối; client hiểu đó là "bỏ qua
+lần này", không phải lỗi.
+
+**15. `content_items` mở cho khách vô danh đọc.** Đây là quyết định của chính tôi ở V8,
+với lý do "nội dung ôn thi là công khai". Đúng về nội dung nhưng sai về chịu tải: khoá
+anon nằm công khai trong mã nguồn theo thiết kế, nên bất kỳ ai cũng kéo được gói từ
+vựng 1,7 MB lặp vô hạn. Đó là bộ khuếch đại băng thông tính tiền trên hoá đơn Supabase.
+*Sửa:* chỉ tài khoản đã đăng nhập mới đọc được `content_items` và gọi được
+`content_manifest()`. Người chưa đăng nhập vẫn học bình thường bằng JSON tĩnh do CDN
+phục vụ — miễn phí và không giới hạn.
+
+**16. Test tự nó sai.** Test kiểm tra `content_items` bằng cách quét cả `schema.sql`,
+nhưng tệp này là migration nối tiếp: chính sách V8 cũ vẫn nằm đó dù V10 đã `drop` và
+tạo lại. Test khớp phải câu lệnh **đã bị thay thế** và báo đỏ oan.
+*Sửa:* chỉ xét định nghĩa **cuối cùng** của mỗi policy — đó mới là cái có hiệu lực.
+
+## Kết quả sau đợt 2
+
+```
+Bản module (đang ship):  51 + 38 + 58 + 78 = 225 đạt / 0 lỗi
+Bản IIFE  (đối chiếu):   51 + 38 + 58      = 147 đạt / 0 lỗi
+test_v6, test_logic, test_data, check_modules: đạt
+```
+
+Chi tiết về mô hình mối đe doạ và ba lớp phòng thủ: xem `CLOUDFLARE.md`.

@@ -1,0 +1,6 @@
+# Cloudflare Pages — chuyển hướng.
+#
+# App định tuyến bằng hash (#study, #quiz...) nên không cần rewrite kiểu SPA.
+# Dòng dưới chỉ để mọi đường dẫn lạ về trang chính, thay cho 404.html.
+# Mã 200 (rewrite, không phải redirect) để URL người dùng gõ được giữ nguyên.
+/*    /index.html   200
