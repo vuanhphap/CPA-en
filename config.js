@@ -13,7 +13,7 @@
     supabaseUrl: env.SUPABASE_URL || DEFAULTS.supabaseUrl,
     supabasePublishableKey: env.SUPABASE_ANON_KEY || DEFAULTS.supabasePublishableKey,
     appName: 'CPA English Trainer',
-    appVersion: 'v8-production',
+    appVersion: 'v9-ui-refresh',
     dataVersion: '2026-09-03-v8-production',
     // Bật/tắt nút đăng nhập mạng xã hội. Chỉ bật khi đã cấu hình provider trong Supabase.
     oauthProviders: (env.OAUTH_PROVIDERS || '').split(',').map(s => s.trim()).filter(Boolean),

@@ -1,9 +1,9 @@
-/* Service worker V7.
-   Thay đổi so với V6: KHÔNG còn cache-first cho toàn bộ. HTML/JS/CSS dùng
+/* Service worker V9.
+   Kế thừa V8: KHÔNG còn cache-first cho toàn bộ. HTML/JS/CSS dùng
    network-first, nếu không thì người dùng deploy bản mới mà máy khách vẫn chạy
    bản cũ vĩnh viễn cho tới khi tự xoá cache — lỗi kinh điển của PWA tĩnh.
    Dữ liệu corpus (data/*.json) là bất biến theo phiên bản nên vẫn cache-first. */
-const VERSION='v8-20260903';
+const VERSION='v9-20260904';
 const SHELL_CACHE=`cpa-shell-${VERSION}`;
 const DATA_CACHE=`cpa-data-${VERSION}`;
 
@@ -11,7 +11,7 @@ const DATA_CACHE=`cpa-data-${VERSION}`;
 // lần tải thứ hai sẽ phải đi mạng cho từng module và mất lợi thế offline.
 const MODULES=['util','runtime','store','srs','sessions','content','analytics',
   'sync','auth','views_home','views_study','views_practice','main'].map(m=>`js/${m}.js`);
-const SHELL=['./','index.html','styles.css','config.js','manifest.webmanifest','icon.svg','404.html',
+const SHELL=['./','index.html','styles.css','config.js','js/theme.js','manifest.webmanifest','icon.svg','404.html',
   'data/manifest.json',...MODULES];
 const DATA=['data/core_cpa.json','data/word_families.json','data/collocations.json','data/topic_summary.json',
   'data/glosses.json','data/ipa.json','data/sentences.json',

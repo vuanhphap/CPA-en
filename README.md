@@ -338,3 +338,10 @@ Qua cổng rồi mới đổi `index.html` sang `js/main.js`.
    tự lùi về cách ghi cũ, nhưng mất hạn mức, realtime và corpus có phiên bản.
 2. **Bật Realtime** cho `study_progress` và `daily_stats` trong Supabase Dashboard.
 3. **Xoay service-role key** nếu từng dùng nó ở đâu khác ngoài máy cá nhân.
+
+## Giao diện V9 (2026-09-04)
+
+- Nền sáng ấm làm mặc định, có chế độ tối và ghi nhớ lựa chọn trên thiết bị.
+- Menu dùng icon nét thay emoji; font Plus Jakarta Sans cho giao diện và Newsreader cho nội dung nhấn mạnh.
+- Giữ nguyên toàn bộ logic V8, dữ liệu học, Supabase, RLS và cơ chế đồng bộ nhiều thiết bị.
+- Script đổi giao diện đặt trong `js/theme.js` để tương thích Content Security Policy trên Vercel.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1220" />
+  <meta name="theme-color" content="#faf6f0" />
   <title>CPA English Trainer — Luyện tiếng Anh thi CPA Việt Nam</title>
   <meta name="description" content="Nền tảng ôn thi tiếng Anh CPA: SRS từ vựng, IPA, collocation, word family, luyện câu và đề gốc 2010–2024. Học miễn phí, đăng ký để đồng bộ đa thiết bị." />
   <meta name="robots" content="index,follow" />
@@ -17,6 +17,10 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon.svg" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
+  <script src="js/theme.js"></script>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -32,21 +36,21 @@
 
       <nav class="nav" id="nav">
         <div class="nav-group">Theo dõi</div>
-        <button data-view="dashboard" class="active">📊 Tổng quan</button>
-        <button data-view="history">📈 Tiến trình học</button>
-        <button data-view="weak">⚠️ Câu/từ yếu</button>
+        <button data-view="dashboard" class="active"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 15V9"/><path d="M10 15V5"/><path d="M16 15v-4"/></svg><span>Tổng quan</span></button>
+        <button data-view="history"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 14l4.5-5 3.5 3L17 5"/><path d="M3 17h14"/></svg><span>Tiến trình học</span></button>
+        <button data-view="weak"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6.5v4.5"/><path d="M10 13.4v.2"/></svg><span>Câu/từ yếu</span></button>
         <div class="nav-group">Học</div>
-        <button data-view="study">🧠 Học SRS</button>
-        <button data-view="families">🧬 Word Family</button>
-        <button data-view="collocations">🔗 Collocation</button>
-        <button data-view="chunks">🧩 Cụm &amp; câu</button>
-        <button data-view="dictionary">📚 Từ điển</button>
+        <button data-view="study"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="6" width="12" height="10" rx="2"/><path d="M7 3.5h8A2 2 0 0 1 17 5.5v8"/></svg><span>Học SRS</span></button>
+        <button data-view="families"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v5"/><path d="M5 16v-3.5A3.5 3.5 0 0 1 8.5 9h3A3.5 3.5 0 0 1 15 12.5V16"/><circle cx="10" cy="4" r="1.6"/></svg><span>Word Family</span></button>
+        <button data-view="collocations"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="7.2" cy="10" r="4.2"/><circle cx="12.8" cy="10" r="4.2"/></svg><span>Collocation</span></button>
+        <button data-view="chunks"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12v8H9l-4 3z"/><path d="M7 9h6"/></svg><span>Cụm &amp; câu</span></button>
+        <button data-view="dictionary"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4.5h5.5a1.5 1.5 0 0 1 1.5 1.5v10a1.2 1.2 0 0 0-1.2-1.2H4z"/><path d="M16 4.5h-3.5A1.5 1.5 0 0 0 11 6v10"/></svg><span>Từ điển</span></button>
         <div class="nav-group">Luyện thi</div>
-        <button data-view="quiz">🎯 Quiz tự chấm</button>
-        <button data-view="drills">✍️ Luyện câu đề thi</button>
-        <button data-view="exams">📝 Luyện đề gốc</button>
+        <button data-view="quiz"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="2.4"/></svg><span>Quiz tự chấm</span></button>
+        <button data-view="drills"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M14.5 3.9l1.6 1.6-8.3 8.3-2.4.8.8-2.4z"/><path d="M4 17h12"/></svg><span>Luyện câu đề thi</span></button>
+        <button data-view="exams"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="3" width="11" height="14" rx="2"/><path d="M7.5 7.5h5"/><path d="M7.5 11h5"/></svg><span>Luyện đề gốc</span></button>
         <div class="nav-group">Khác</div>
-        <button data-view="settings">⚙️ Dữ liệu &amp; cài đặt</button>
+        <button data-view="settings"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7h14"/><path d="M3 13h14"/><circle cx="8" cy="7" r="1.9"/><circle cx="13" cy="13" r="1.9"/></svg><span>Dữ liệu &amp; cài đặt</span></button>
       </nav>
 
       <div class="sidebar-footer">
@@ -63,6 +67,9 @@
           <p id="viewSubtitle">Học theo dữ liệu đề thi thực tế, ưu tiên CPA technical vocabulary.</p>
         </div>
         <div class="top-actions">
+          <button class="icon-btn" id="themeToggle" title="Đổi nền sáng/tối" aria-label="Đổi nền sáng/tối">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="4"/><path d="M10 2.5v1.6M10 15.9v1.6M2.5 10h1.6M15.9 10h1.6"/></svg>
+          </button>
           <button class="icon-btn" id="quickSync" title="Đồng bộ ngay" aria-label="Đồng bộ ngay">↻</button>
           <div class="user-menu">
             <button class="avatar-btn" id="userMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Tài khoản">
