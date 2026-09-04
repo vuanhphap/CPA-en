@@ -1,0 +1,11 @@
+{
+  "name": "cpa-english-trainer-qa",
+  "private": true,
+  "description": "Chỉ dùng cho kiểm thử. Cố ý đặt trong qa/ để thư mục gốc không bị Vercel/GitHub nhận nhầm là dự án Node có build step — app là site tĩnh thuần.",
+  "scripts": {
+    "test": "node test_v7.js && node test_v6.js && node test_logic.js"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0"
+  }
+}

@@ -339,9 +339,13 @@ Qua cổng rồi mới đổi `index.html` sang `js/main.js`.
 2. **Bật Realtime** cho `study_progress` và `daily_stats` trong Supabase Dashboard.
 3. **Xoay service-role key** nếu từng dùng nó ở đâu khác ngoài máy cá nhân.
 
-## Giao diện V9 (2026-09-04)
 
-- Nền sáng ấm làm mặc định, có chế độ tối và ghi nhớ lựa chọn trên thiết bị.
-- Menu dùng icon nét thay emoji; font Plus Jakarta Sans cho giao diện và Newsreader cho nội dung nhấn mạnh.
-- Giữ nguyên toàn bộ logic V8, dữ liệu học, Supabase, RLS và cơ chế đồng bộ nhiều thiết bị.
-- Script đổi giao diện đặt trong `js/theme.js` để tương thích Content Security Policy trên Vercel.
+## Giao diện v9 (2026-09)
+
+- `styles.css` được viết lại: nền sáng ấm (kem/cam đất) làm mặc định, kèm nền tối.
+  Toàn bộ tên class và markup của v8 giữ nguyên, nên mọi module JS, dữ liệu và logic SRS không đổi.
+- Chủ đề màu điều khiển bằng `data-theme="light|dark"` trên `<html>`, lưu ở `localStorage['cpa-theme']`,
+  đặt ngay trong `<head>` để không nháy màu khi tải.
+- Nút đổi sáng/tối: `#themeToggle` trên topbar (script inline ở cuối `index.html`).
+- Menu bên trái dùng icon line SVG thay emoji; font: Plus Jakarta Sans (UI) + Newsreader (số & chữ nhấn).
+- Màu chữ nhỏ ở nền sáng đã chỉnh đạt tương phản WCAG AA.
